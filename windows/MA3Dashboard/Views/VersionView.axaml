@@ -1,0 +1,93 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MA3Dashboard.ViewModels"
+             xmlns:v="using:MA3Dashboard.Views"
+             xmlns:mi="using:Material.Icons.Avalonia"
+             xmlns:core="using:MA3Dashboard.Core"
+             x:Class="MA3Dashboard.Views.VersionView"
+             x:DataType="vm:VersionViewModel">
+    <Grid RowDefinitions="Auto,Auto,*">
+        <!-- Header -->
+        <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Spacing="3">
+                <TextBlock Text="{Binding Title}" Classes="h1" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Ellipse Width="8" Height="8" Fill="{DynamicResource RunningBrush}" IsVisible="{Binding IsRunning}" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding Status}" Classes="sub" />
+                    <TextBlock Text="·" Classes="sub" IsVisible="{Binding BackupText, Converter={x:Static v:Conv.NotEmpty}}" />
+                    <TextBlock Text="{Binding BackupText}" Classes="sub" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <Button Classes="tool" Command="{Binding ImportShowsCommand}" ToolTip.Tip="Import showfiles into this version">
+                    <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="FileImport" /><TextBlock Text="Import" /></StackPanel>
+                </Button>
+                <Button Classes="tool" Command="{Binding OpenFolderCommand}" ToolTip.Tip="Open the shows folder">
+                    <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="FolderOpen" /><TextBlock Text="Shows Folder" /></StackPanel>
+                </Button>
+                <!-- One build: a plain button. Several (e.g. 2.5.1.0 and 2.5.1.1, or CleanStart): the newest, plus a menu. -->
+                <Button Classes="accent tool" Command="{Binding LaunchCommand}" IsVisible="{Binding !HasManyBuilds}" IsEnabled="{Binding HasBuilds}">
+                    <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="Play" /><TextBlock Text="Launch" /></StackPanel>
+                </Button>
+                <SplitButton Classes="accent tool" Command="{Binding LaunchCommand}" IsVisible="{Binding HasManyBuilds}">
+                    <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="Play" /><TextBlock Text="{Binding NewestBuild.FullVersion, StringFormat='Launch {0}'}" /></StackPanel>
+                    <SplitButton.Flyout>
+                        <MenuFlyout ItemsSource="{Binding Builds}">
+                            <MenuFlyout.ItemContainerTheme>
+                                <ControlTheme TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}" x:DataType="core:MABuild">
+                                    <Setter Property="Header" Value="{Binding Name}" />
+                                    <Setter Property="Command" Value="{Binding $parent[UserControl].DataContext.LaunchCommand}" />
+                                    <Setter Property="CommandParameter" Value="{Binding}" />
+                                </ControlTheme>
+                            </MenuFlyout.ItemContainerTheme>
+                        </MenuFlyout>
+                    </SplitButton.Flyout>
+                </SplitButton>
+            </StackPanel>
+        </Grid>
+
+        <TextBlock Grid.Row="1" Text="{Binding LoadHint}" Classes="sub" Margin="0,10,0,0" IsVisible="{Binding LoadHint, Converter={x:Static v:Conv.NotEmpty}}" />
+
+        <!-- Shows -->
+        <Grid Grid.Row="2" Margin="0,14,0,0">
+            <DataGrid x:Name="Grid" ItemsSource="{Binding Shows}" SelectedItem="{Binding SelectedShow}">
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Show" Width="*" SortMemberPath="Name">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="10,0" VerticalAlignment="Center">
+                                    <mi:MaterialIcon Kind="FileDocumentOutline" Foreground="{DynamicResource MutedBrush}" />
+                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding Extension}" Classes="sub" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Modified" Width="170" Binding="{Binding ModifiedText}" SortMemberPath="Modified" />
+                    <DataGridTextColumn Header="Size" Width="100" Binding="{Binding SizeText}" SortMemberPath="Size" />
+                    <DataGridTemplateColumn Header="" Width="240">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right" Margin="0,0,8,0">
+                                    <Button Padding="8,3" Command="{Binding $parent[UserControl].DataContext.LoadCommand}" CommandParameter="{Binding}"
+                                            IsVisible="{Binding $parent[UserControl].DataContext.CanLoad}" ToolTip.Tip="LoadShow over OSC">Load</Button>
+                                    <Button Padding="6,3" Command="{Binding $parent[UserControl].DataContext.DuplicateCommand}" CommandParameter="{Binding}" ToolTip.Tip="Duplicate">
+                                        <mi:MaterialIcon Kind="ContentCopy" /></Button>
+                                    <Button Padding="6,3" Command="{Binding $parent[UserControl].DataContext.RevealCommand}" CommandParameter="{Binding}" ToolTip.Tip="Show in folder">
+                                        <mi:MaterialIcon Kind="FolderSearchOutline" /></Button>
+                                    <Button Padding="6,3" Command="{Binding $parent[UserControl].DataContext.TrashCommand}" CommandParameter="{Binding}" ToolTip.Tip="Move to Recycle Bin">
+                                        <mi:MaterialIcon Kind="TrashCanOutline" /></Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6" IsVisible="{Binding !Shows.Count}">
+                <mi:MaterialIcon Kind="FileDocumentMultipleOutline" Width="40" Height="40" Foreground="{DynamicResource MutedBrush}" />
+                <TextBlock Text="No showfiles yet" HorizontalAlignment="Center" FontWeight="SemiBold" />
+                <TextBlock Text="Shows saved in onPC, or files dropped here, appear in this list." Classes="sub" HorizontalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

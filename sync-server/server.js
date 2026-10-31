@@ -1,0 +1,224 @@
+#!/usr/bin/env node
+// MA Dashboard sync server: a small file store for showfiles and library files.
+// No dependencies. Clients diff against /api/manifest and move files with chunked uploads,
+// so each request stays well under Cloudflare's 100 MB body limit.
+//
+// Env: SYNC_TOKEN (required), PORT (default 8787), DATA_DIR (default ./data), KEEP_VERSIONS (default 10)
+
+const http = require('http');
+const fs = require('fs');
+const fsp = require('fs/promises');
+const path = require('path');
+const crypto = require('crypto');
+
+const TOKEN = process.env.SYNC_TOKEN || '';
+const PORT = Number(process.env.PORT) || 8787;
+const DATA = path.resolve(process.env.DATA_DIR || path.join(__dirname, 'data'));
+const KEEP = Number(process.env.KEEP_VERSIONS) || 10;
+const MAX_FILE = 4 * 1024 ** 3; // 4 GB per file
+const FILES = path.join(DATA, 'files');
+const VERSIONS = path.join(DATA, 'versions');
+const UPLOADS = path.join(DATA, 'uploads');
+const INDEX = path.join(DATA, 'index.json');
+
+if (TOKEN.length < 16) {
+  console.error('Set SYNC_TOKEN to a random string of at least 16 characters (e.g. `openssl rand -hex 32`).');
+  process.exit(1);
+}
+for (const d of [FILES, VERSIONS, UPLOADS]) fs.mkdirSync(d, { recursive: true });
+
+// index: { rev, files: { [path]: { sha, size, mtime, rev, deleted?, device?, updated } } }
+let index = { rev: 0, files: {} };
+try { index = JSON.parse(fs.readFileSync(INDEX, 'utf8')); } catch {}
+
+let writing = Promise.resolve();
+function saveIndex() {
+  // Serialize writes; write-then-rename keeps the index intact if the container dies mid-write.
+  writing = writing.then(async () => {
+    const tmp = INDEX + '.tmp';
+    await fsp.writeFile(tmp, JSON.stringify(index));
+    await fsp.rename(tmp, INDEX);
+  });
+  return writing;
+}
+
+// Drop stale upload sessions (older than a day) on start.
+for (const id of fs.readdirSync(UPLOADS)) {
+  const p = path.join(UPLOADS, id);
+  try { if (Date.now() - fs.statSync(p).mtimeMs > 86400e3) fs.rmSync(p, { force: true }); } catch {}
+}
+
+class HttpError extends Error { constructor(code, msg) { super(msg); this.code = code; } }
+
+/** Sync paths look like "ma3/2.5.1/shows/My Show.show": relative, forward slashes, no dot segments. */
+function cleanPath(p) {
+  if (typeof p !== 'string' || !p || p.length > 1024) throw new HttpError(400, 'bad path');
+  const parts = p.split('/');
+  if (p.startsWith('/') || p.includes('\\') || p.includes('\0') ||
+      parts.some((s) => !s || s === '.' || s === '..')) throw new HttpError(400, 'bad path');
+  return parts.join('/');
+}
+const filePath = (p) => path.join(FILES, ...p.split('/'));
+
+function authorized(req) {
+  const h = req.headers.authorization || '';
+  const given = Buffer.from(h.startsWith('Bearer ') ? h.slice(7) : '');
+  const want = Buffer.from(TOKEN);
+  return given.length === want.length && crypto.timingSafeEqual(given, want);
+}
+
+function json(res, code, body) {
+  res.writeHead(code, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(body));
+}
+
+async function readJson(req) {
+  let raw = '';
+  for await (const c of req) { raw += c; if (raw.length > 1e6) throw new HttpError(413, 'body too large'); }
+  try { return raw ? JSON.parse(raw) : {}; } catch { throw new HttpError(400, 'bad json'); }
+}
+
+/** Moves the current copy of a path into versions/ and trims old versions. */
+async function archive(p, entry) {
+  const src = filePath(p);
+  if (!fs.existsSync(src)) return;
+  const dir = path.join(VERSIONS, ...p.split('/'));
+  await fsp.mkdir(dir, { recursive: true });
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  await fsp.rename(src, path.join(dir, `${stamp}_${(entry.sha || '').slice(0, 12)}`));
+  const old = (await fsp.readdir(dir)).sort();
+  for (const f of old.slice(0, Math.max(0, old.length - KEEP))) await fsp.rm(path.join(dir, f), { force: true });
+}
+
+/** Rejects writes whose base doesn't match the server's current copy, so two machines can't clobber each other. */
+function checkBase(p, baseSha) {
+  if (baseSha === undefined) return;
+  const cur = index.files[p];
+  const curSha = cur && !cur.deleted ? cur.sha : null;
+  if ((baseSha || null) !== curSha) throw new HttpError(409, 'conflict: file changed on server');
+}
+
+const routes = {
+  'GET /api/manifest': async (req, res) => json(res, 200, index),
+
+  'POST /api/uploads': async (req, res) => {
+    const id = crypto.randomBytes(16).toString('hex');
+    await fsp.writeFile(path.join(UPLOADS, id), '');
+    json(res, 200, { id });
+  },
+
+  // PUT /api/uploads/<id>?offset=N appends one chunk.
+  'PUT /api/uploads/:id': async (req, res, { id, query }) => {
+    if (!/^[0-9a-f]{32}$/.test(id)) throw new HttpError(400, 'bad upload id');
+    const p = path.join(UPLOADS, id);
+    const st = await fsp.stat(p).catch(() => null);
+    if (!st) throw new HttpError(404, 'unknown upload');
+    if (Number(query.get('offset')) !== st.size) throw new HttpError(409, `offset mismatch, have ${st.size}`);
+    const out = fs.createWriteStream(p, { flags: 'a' });
+    let n = st.size;
+    for await (const c of req) {
+      n += c.length;
+      if (n > MAX_FILE) { out.destroy(); throw new HttpError(413, 'file too large'); }
+      if (!out.write(c)) await new Promise((r) => out.once('drain', r));
+    }
+    await new Promise((r, j) => out.end((e) => (e ? j(e) : r())));
+    json(res, 200, { size: n });
+  },
+
+  // POST /api/uploads/<id>/commit {path, sha, mtime, baseSha?, device?}
+  'POST /api/uploads/:id/commit': async (req, res, { id }) => {
+    if (!/^[0-9a-f]{32}$/.test(id)) throw new HttpError(400, 'bad upload id');
+    const body = await readJson(req);
+    const p = cleanPath(body.path);
+    const up = path.join(UPLOADS, id);
+    if (!fs.existsSync(up)) throw new HttpError(404, 'unknown upload');
+    const hash = crypto.createHash('sha256');
+    for await (const c of fs.createReadStream(up)) hash.update(c);
+    const sha = hash.digest('hex');
+    if (sha !== body.sha) { await fsp.rm(up, { force: true }); throw new HttpError(422, 'checksum mismatch'); }
+    try { checkBase(p, body.baseSha); } catch (e) { await fsp.rm(up, { force: true }); throw e; }
+    const cur = index.files[p];
+    if (cur && !cur.deleted && cur.sha === sha) { await fsp.rm(up, { force: true }); return json(res, 200, cur); }
+    if (cur && !cur.deleted) await archive(p, cur);
+    await fsp.mkdir(path.dirname(filePath(p)), { recursive: true });
+    await fsp.rename(up, filePath(p));
+    const size = (await fsp.stat(filePath(p))).size;
+    index.rev += 1;
+    index.files[p] = { sha, size, mtime: Number(body.mtime) || Date.now(), rev: index.rev,
+                       device: String(body.device || '').slice(0, 100), updated: Date.now() };
+    await saveIndex();
+    json(res, 200, index.files[p]);
+  },
+
+  // GET /api/file?path=...
+  'GET /api/file': async (req, res, { query }) => {
+    const p = cleanPath(query.get('path'));
+    const e = index.files[p];
+    if (!e || e.deleted) throw new HttpError(404, 'not found');
+    res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Length': e.size,
+                         'X-SHA256': e.sha, 'X-Mtime': String(e.mtime) });
+    fs.createReadStream(filePath(p)).pipe(res);
+  },
+
+  // DELETE /api/file?path=...&baseSha=... keeps the last copy in versions/
+  'DELETE /api/file': async (req, res, { query }) => {
+    const p = cleanPath(query.get('path'));
+    const cur = index.files[p];
+    if (!cur || cur.deleted) return json(res, 200, { deleted: true });
+    if (query.has('baseSha')) checkBase(p, query.get('baseSha'));
+    await archive(p, cur);
+    index.rev += 1;
+    index.files[p] = { deleted: true, sha: null, size: 0, mtime: Date.now(), rev: index.rev,
+                       device: String(query.get('device') || '').slice(0, 100), updated: Date.now() };
+    await saveIndex();
+    json(res, 200, index.files[p]);
+  },
+
+  // GET /api/versions?path=... lists archived copies; add &v=<name> to download one.
+  'GET /api/versions': async (req, res, { query }) => {
+    const p = cleanPath(query.get('path'));
+    const dir = path.join(VERSIONS, ...p.split('/'));
+    const v = query.get('v');
+    if (v) {
+      if (!/^[\w.-]+$/.test(v)) throw new HttpError(400, 'bad version');
+      const f = path.join(dir, v);
+      const st = await fsp.stat(f).catch(() => null);
+      if (!st) throw new HttpError(404, 'not found');
+      res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Length': st.size });
+      return fs.createReadStream(f).pipe(res);
+    }
+    const names = (await fsp.readdir(dir).catch(() => [])).sort().reverse();
+    const list = await Promise.all(names.map(async (n) => ({ name: n, size: (await fsp.stat(path.join(dir, n))).size })));
+    json(res, 200, { versions: list });
+  },
+};
+
+function route(method, pathname) {
+  for (const key of Object.keys(routes)) {
+    const [m, pattern] = key.split(' ');
+    if (m !== method) continue;
+    const names = [];
+    const re = new RegExp('^' + pattern.replace(/:(\w+)/g, (_, n) => { names.push(n); return '([^/]+)'; }) + '$');
+    const match = pathname.match(re);
+    if (match) return { handler: routes[key], params: Object.fromEntries(names.map((n, i) => [n, match[i + 1]])) };
+  }
+  return null;
+}
+
+const server = http.createServer(async (req, res) => {
+  const url = new URL(req.url, 'http://x');
+  try {
+    if (url.pathname === '/api/health') return json(res, 200, { ok: true, rev: index.rev });
+    if (!authorized(req)) throw new HttpError(401, 'unauthorized');
+    const r = route(req.method, url.pathname);
+    if (!r) throw new HttpError(404, 'not found');
+    await r.handler(req, res, { ...r.params, query: url.searchParams });
+  } catch (e) {
+    if (!(e instanceof HttpError)) console.error(e);
+    if (!res.headersSent) json(res, e.code || 500, { error: e.message });
+    else res.destroy();
+  }
+});
+
+server.requestTimeout = 0; // large chunks over slow links
+server.listen(PORT, () => console.log(`MA sync server on :${PORT}, data in ${DATA}`));

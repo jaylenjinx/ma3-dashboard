@@ -1,0 +1,95 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MA3Dashboard.ViewModels"
+             xmlns:v="using:MA3Dashboard.Views"
+             xmlns:mi="using:Material.Icons.Avalonia"
+             x:Class="MA3Dashboard.Views.FixturesView"
+             x:DataType="vm:FixturesViewModel">
+    <Grid RowDefinitions="Auto,Auto,*">
+        <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Spacing="3">
+                <TextBlock Text="Fixture Types" Classes="h1" />
+                <TextBlock Text="{Binding Subtitle}" Classes="sub" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <ComboBox ItemsSource="{Binding Library.Locations}" SelectedItem="{Binding Library.Selected}" MinWidth="170" />
+                <Button Classes="tool" Command="{Binding OpenFolderCommand}" ToolTip.Tip="Open the fixturetypes folder"><mi:MaterialIcon Kind="FolderOpen" /></Button>
+                <Button Classes="accent tool" Command="{Binding ImportCommand}" ToolTip.Tip="Import .gdtf, MA3 .xml or MA2 .pxml">
+                    <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="FileImport" /><TextBlock Text="Import" /></StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,14,0,10">
+            <TextBox Text="{Binding Search}" PlaceholderText="Search manufacturer, name or file" Width="320" />
+            <ComboBox ItemsSource="{Binding Formats}" SelectedItem="{Binding Format}" MinWidth="140" />
+        </StackPanel>
+
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+            <DataGrid ItemsSource="{Binding Filtered}" SelectedItem="{Binding Selected}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Manufacturer" Width="*" Binding="{Binding Manufacturer}" />
+                    <DataGridTextColumn Header="Name" Width="1.6*" Binding="{Binding Name}" />
+                    <DataGridTemplateColumn Header="Format" Width="96" SortMemberPath="Format">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border CornerRadius="4" Padding="6,1" Margin="10,0" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                        Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource HairlineBrush}" BorderThickness="1">
+                                    <TextBlock Text="{Binding FormatText}" FontSize="11" />
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Modes" Width="100" Binding="{Binding ModesText}" />
+                    <DataGridTextColumn Header="Revision" Width="*" Binding="{Binding Revision}" />
+                    <DataGridTextColumn Header="Size" Width="84" Binding="{Binding SizeText}" SortMemberPath="Size" />
+                </DataGrid.Columns>
+            </DataGrid>
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6" IsVisible="{Binding !Filtered.Count}">
+                <mi:MaterialIcon Kind="LightbulbGroupOutline" Width="40" Height="40" Foreground="{DynamicResource MutedBrush}" />
+                <TextBlock Text="No fixture types" HorizontalAlignment="Center" FontWeight="SemiBold" />
+                <TextBlock Text="Drop .gdtf, MA3 .xml or MA2 .pxml files here." Classes="sub" HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <Border Grid.Column="1" Classes="card" Width="320" Margin="12,0,0,0" IsVisible="{Binding Selected, Converter={x:Static v:Conv.NotNull}}">
+                <Grid RowDefinitions="Auto,Auto,Auto,*">
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="{Binding Selected.Manufacturer}" Classes="sub" />
+                        <TextBlock Text="{Binding Selected.Name}" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding Selected.FileName}" Classes="sub" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6" Margin="0,10">
+                        <Button Command="{Binding DuplicateCommand}" ToolTip.Tip="Duplicate"><mi:MaterialIcon Kind="ContentCopy" /></Button>
+                        <Button Command="{Binding RevealCommand}" ToolTip.Tip="Show in folder"><mi:MaterialIcon Kind="FolderSearchOutline" /></Button>
+                        <Button Command="{Binding TrashCommand}" ToolTip.Tip="Move to Recycle Bin"><mi:MaterialIcon Kind="TrashCanOutline" /></Button>
+                    </StackPanel>
+                    <Grid Grid.Row="2" ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" Margin="0,0,0,12">
+                        <TextBlock Text="Format" Classes="sub" Margin="0,0,14,4" />
+                        <TextBlock Grid.Column="1" Text="{Binding Selected.FormatText}" />
+                        <TextBlock Grid.Row="1" Text="Revision" Classes="sub" Margin="0,0,14,4" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Selected.Revision}" TextWrapping="Wrap" />
+                        <TextBlock Grid.Row="2" Text="Modified" Classes="sub" Margin="0,0,14,4" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Selected.ModifiedText}" />
+                    </Grid>
+                    <ScrollViewer Grid.Row="3">
+                        <StackPanel>
+                            <TextBlock Text="DMX modes" Classes="section" />
+                            <ItemsControl ItemsSource="{Binding Selected.Modes}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="*,Auto" Margin="0,3">
+                                            <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
+                                            <TextBlock Grid.Column="1" Text="{Binding Channels, StringFormat='{}{0} ch'}" Classes="sub" Margin="10,0,0,0" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock Text="Modes aren't read from MA2 .pxml files." Classes="sub" TextWrapping="Wrap"
+                                       IsVisible="{Binding !Selected.Modes.Count}" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

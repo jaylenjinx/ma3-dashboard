@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MA3 Dashboard</title>
+<meta name="description" content="A desktop dashboard for grandMA3 and grandMA2 onPC: launch any version, manage showfiles, color themes, fixture types and datapools, install new versions, and sync it all between computers.">
+<meta property="og:title" content="MA3 Dashboard">
+<meta property="og:description" content="Launch any grandMA onPC version, manage showfiles and library files, and sync them between your Mac and PC.">
+<meta property="og:image" content="https://jaylenjinx.github.io/ma3-dashboard/images/shows.jpg">
+<link rel="icon" type="image/png" href="images/favicon.png">
+<link rel="apple-touch-icon" href="images/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --ground: #f5f4f1;
+  --surface: #ffffff;
+  --surface-2: #ece9e3;
+  --edge: #dcd7ce;
+  --text: #1b1a17;
+  --text-dim: #625d54;
+  --accent: #b5741a;
+  --accent-ink: #1b1a17;
+  --amber: #e8a33d;
+  --code-ground: #17150f;
+  --code-text: #ece5d8;
+  --shadow: 0 1px 2px rgba(30, 24, 12, .06), 0 18px 40px -24px rgba(30, 24, 12, .35);
+  --hero-ground: #141210;
+  --hero-text: #f3eee6;
+  --hero-dim: #b5ab9c;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #12110f;
+    --surface: #1a1916;
+    --surface-2: #24221e;
+    --edge: #2f2c27;
+    --text: #ece7df;
+    --text-dim: #a49c8f;
+    --accent: #eab060;
+    --accent-ink: #1b1a17;
+    --code-ground: #0c0b09;
+    --code-text: #ece5d8;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 18px 40px -22px rgba(0, 0, 0, .9);
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #12110f;
+  --surface: #1a1916;
+  --surface-2: #24221e;
+  --edge: #2f2c27;
+  --text: #ece7df;
+  --text-dim: #a49c8f;
+  --accent: #eab060;
+  --accent-ink: #1b1a17;
+  --code-ground: #0c0b09;
+  --code-text: #ece5d8;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 18px 40px -22px rgba(0, 0, 0, .9);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--text);
+  font: 400 17px/1.62 "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, .eyebrow, .btn, nav a {
+  font-family: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  text-wrap: balance;
+}
+a { color: var(--accent); text-underline-offset: 2px; text-decoration-thickness: 1px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; border-radius: 4px; }
+code, pre { font-family: "JetBrains Mono", ui-monospace, Menlo, monospace; }
+code { font-size: .86em; background: var(--surface-2); padding: .1em .35em; border-radius: 4px; }
+pre {
+  background: var(--code-ground); color: var(--code-text); padding: 14px 16px; border-radius: 8px;
+  overflow-x: auto; font-size: 13.5px; line-height: 1.55; margin: 14px 0;
+}
+pre code { background: none; padding: 0; font-size: inherit; }
+img { max-width: 100%; height: auto; display: block; }
+.wrap { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
+
+/* ---------- hero: a dark stage with a single amber beam ---------- */
+.hero {
+  position: relative; overflow: hidden;
+  background:
+    radial-gradient(ellipse 60% 70% at 72% -10%, rgba(232, 163, 61, .30), transparent 65%),
+    linear-gradient(180deg, #1b1814 0%, var(--hero-ground) 70%);
+  color: var(--hero-text);
+  padding: 22px 0 0;
+}
+.hero::after {
+  /* the beam */
+  content: ""; position: absolute; top: -40px; right: 18%; width: 420px; height: 760px;
+  background: linear-gradient(180deg, rgba(255, 196, 110, .22), rgba(255, 196, 110, 0) 80%);
+  clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
+  pointer-events: none;
+}
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; position: relative; z-index: 1; }
+.topbar a.back { color: var(--hero-dim); text-decoration: none; font-size: 15px; }
+.topbar a.back:hover { color: var(--hero-text); }
+nav { display: flex; gap: 20px; flex-wrap: wrap; }
+nav a { color: var(--hero-dim); text-decoration: none; font-size: 16px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+nav a:hover { color: var(--amber); }
+.hero-copy { position: relative; z-index: 1; display: grid; grid-template-columns: auto 1fr; gap: 26px; align-items: center; padding: 56px 0 34px; max-width: 820px; }
+.hero-copy img { width: 112px; height: 112px; border-radius: 26px; box-shadow: 0 18px 40px -14px rgba(0, 0, 0, .8); }
+.eyebrow { color: var(--amber); text-transform: uppercase; letter-spacing: .14em; font-weight: 600; font-size: 14px; margin: 0 0 4px; }
+h1 { font-size: clamp(44px, 7vw, 72px); line-height: .98; margin: 0; font-weight: 700; letter-spacing: .005em; }
+.lede { color: var(--hero-dim); font-size: 19px; margin: 14px 0 0; max-width: 52ch; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 26px 0 0; position: relative; z-index: 1; }
+.btn {
+  display: inline-flex; align-items: center; gap: 9px; padding: 11px 18px; border-radius: 8px;
+  font-size: 18px; font-weight: 600; letter-spacing: .03em; text-decoration: none; border: 1px solid transparent;
+}
+.btn svg { width: 18px; height: 18px; flex: none; }
+.btn.primary { background: var(--amber); color: #1b1a17; }
+.btn.primary:hover { background: #f2b456; }
+.btn.ghost { color: var(--hero-text); border-color: rgba(243, 238, 230, .28); }
+.btn.ghost:hover { border-color: var(--amber); color: var(--amber); }
+.fineprint { color: var(--hero-dim); font-size: 14px; margin: 12px 0 0; position: relative; z-index: 1; }
+.hero-shot { position: relative; z-index: 1; margin-top: 44px; }
+.hero-shot img { border-radius: 12px 12px 0 0; box-shadow: 0 -10px 60px -20px rgba(232, 163, 61, .35), 0 30px 60px -20px rgba(0, 0, 0, .9); }
+
+/* ---------- sections ---------- */
+section { padding: 78px 0 10px; }
+section > .wrap > h2, .split h2 { font-size: 38px; line-height: 1.05; margin: 0 0 12px; font-weight: 700; }
+.section-lede { color: var(--text-dim); font-size: 18.5px; max-width: 62ch; margin: 0 0 30px; }
+h3 { font-size: 23px; margin: 0 0 6px; font-weight: 600; }
+p { margin: 0 0 12px; }
+ul.clean { padding-left: 1.1em; margin: 0 0 12px; }
+ul.clean li { margin: 4px 0; }
+ul.clean li::marker { color: var(--accent); }
+
+.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.feature { background: var(--surface); border: 1px solid var(--edge); border-radius: 12px; padding: 20px 20px 16px; box-shadow: var(--shadow); }
+.feature svg { width: 26px; height: 26px; color: var(--accent); margin-bottom: 10px; }
+.feature p { color: var(--text-dim); font-size: 16px; margin: 0; }
+
+.split { display: grid; grid-template-columns: 5fr 7fr; gap: 44px; align-items: center; }
+.split.flip { grid-template-columns: 7fr 5fr; }
+.split.flip .copy { order: 2; }
+.shot { border-radius: 10px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--edge); background: var(--surface-2); cursor: zoom-in; padding: 0; display: block; width: 100%; }
+.shot img { width: 100%; }
+.copy p { color: var(--text-dim); }
+.copy strong { color: var(--text); font-weight: 600; }
+
+.gallery-tabs { display: flex; gap: 6px; margin: 0 0 14px; flex-wrap: wrap; }
+.gallery-tabs button {
+  font: 600 16px/1 "Barlow Condensed", system-ui, sans-serif; letter-spacing: .05em; text-transform: uppercase;
+  background: var(--surface); color: var(--text-dim); border: 1px solid var(--edge); border-radius: 999px; padding: 9px 16px; cursor: pointer;
+}
+.gallery-tabs button[aria-selected="true"] { background: var(--amber); color: #1b1a17; border-color: var(--amber); }
+.gallery-panel[hidden] { display: none; }
+.gallery-grid { display: grid; grid-template-columns: 7fr 4fr; gap: 30px; align-items: start; }
+
+.card { background: var(--surface); border: 1px solid var(--edge); border-radius: 12px; padding: 22px 24px; box-shadow: var(--shadow); }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+ol.steps { padding-left: 1.2em; margin: 0; }
+ol.steps li { margin: 6px 0; }
+ol.steps li::marker { color: var(--accent); font-weight: 600; }
+
+table { width: 100%; border-collapse: collapse; font-size: 15.5px; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--edge); vertical-align: top; }
+th { font-family: "Barlow Condensed", system-ui, sans-serif; font-size: 15px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
+td code { word-break: break-all; }
+.table-scroll { overflow-x: auto; }
+
+.note { border-left: 3px solid var(--amber); padding: 4px 0 4px 14px; color: var(--text-dim); margin: 14px 0; }
+
+footer { margin-top: 90px; border-top: 1px solid var(--edge); padding: 28px 0 46px; color: var(--text-dim); font-size: 15px; }
+footer .wrap { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+
+dialog { padding: 0; border: none; background: transparent; max-width: min(1500px, 96vw); }
+dialog::backdrop { background: rgba(8, 7, 5, .86); }
+dialog img { border-radius: 10px; max-height: 92vh; width: auto; }
+dialog form { position: fixed; top: 14px; right: 18px; }
+dialog button { background: rgba(255, 255, 255, .12); color: #fff; border: none; border-radius: 999px; width: 40px; height: 40px; font-size: 22px; cursor: pointer; }
+
+@media (max-width: 900px) {
+  .features { grid-template-columns: 1fr 1fr; }
+  .split, .split.flip, .gallery-grid, .cols { grid-template-columns: 1fr; gap: 24px; }
+  .split.flip .copy { order: 0; }
+  nav { display: none; }
+}
+@media (max-width: 600px) {
+  body { font-size: 16px; }
+  .wrap { padding: 0 16px; }
+  .features { grid-template-columns: 1fr; }
+  .hero-copy { grid-template-columns: 1fr; gap: 18px; padding-top: 34px; }
+  .hero-copy img { width: 84px; height: 84px; border-radius: 20px; }
+  .hero::after { right: -120px; }
+  section { padding-top: 58px; }
+  section > .wrap > h2, .split h2 { font-size: 32px; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="topbar">
+      <a class="back" href="https://jaylenjinx.github.io/projects/software.html">← Jay's projects</a>
+      <nav aria-label="Sections">
+        <a href="#features">Features</a>
+        <a href="#library">Library</a>
+        <a href="#sync">Cloud Sync</a>
+        <a href="#windows">Windows</a>
+        <a href="#install">Install</a>
+      </nav>
+    </div>
+
+    <div class="hero-copy">
+      <img src="images/icon.png" alt="MA3 Dashboard app icon: a moving head light with an amber beam above four faders" width="112" height="112">
+      <div>
+        <p class="eyebrow">For grandMA3 &amp; grandMA2 onPC</p>
+        <h1>MA3 Dashboard</h1>
+        <p class="lede">One window for every onPC version on your computer. Launch the one you need, find your showfiles, manage themes, fixture types and datapools, install new releases, and keep it all in sync between your Mac and PC.</p>
+      </div>
+    </div>
+
+    <div class="actions">
+      <a class="btn primary" href="https://github.com/jaylenjinx/ma3-dashboard/releases/latest/download/MA3-Dashboard-mac.zip">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.4 12.6c0-2.5 2-3.6 2.1-3.7-1.2-1.7-3-1.9-3.6-2-1.5-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.9-1.7 0-3.3 1-4.2 2.6-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.6 1.3-.1 1.8-.8 3.3-.8 1.6 0 2 .8 3.3.8 1.4 0 2.3-1.3 3.1-2.5 1-1.4 1.4-2.8 1.4-2.9 0 0-2.8-1.1-2.8-4.3zM13.9 5.1c.7-.9 1.2-2.1 1.1-3.3-1 0-2.3.7-3 1.6-.7.8-1.2 2-1.1 3.2 1.2.1 2.3-.6 3-1.5z"/></svg>
+        Download for Mac
+      </a>
+      <a class="btn primary" href="https://github.com/jaylenjinx/ma3-dashboard/releases/latest/download/MA3Dashboard-win-x64.zip">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.5 10.4 4.5v7H3zm0 13 7.4 1v-7H3zm8.3 1.1L21 21v-8.5h-9.7zm0-15.2v7.1H21V3z"/></svg>
+        Download for Windows
+      </a>
+      <a class="btn ghost" href="https://github.com/jaylenjinx/ma3-dashboard">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.4-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.6 9.6 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .6 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.3 4.7-4.6 5 .4.3.7.9.7 1.9V21c0 .3.2.6.7.5A10 10 0 0 0 12 2z"/></svg>
+        Source on GitHub
+      </a>
+    </div>
+    <p class="fineprint">Free · macOS 14 or later (native SwiftUI) · Windows 10/11, 64-bit (no .NET install needed)</p>
+
+    <div class="hero-shot">
+      <img src="images/shows.jpg" alt="MA3 Dashboard on a Mac: a sidebar lists grandMA3 versions 2.5.1, 2.4.2, 2.3.2 and 2.2.5 and grandMA2 3.9.63, and the 2.4.2 page shows its 22 showfiles with modified dates and sizes" width="1600" height="932">
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="features">
+    <div class="wrap">
+      <h2>What it does</h2>
+      <p class="section-lede">onPC spreads itself across launcher slots, standalone apps, per-version data folders and a shared library. The dashboard reads all of it and puts it in one place.</p>
+      <div class="features">
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg>
+          <h3>Launch any version</h3>
+          <p>Every installed build, from launcher slots like 2.2 to 2.4 to the standalone 2.5 apps, plus grandMA2. It shows which one is running.</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>
+          <h3>Showfiles per version</h3>
+          <p>Each version's shows and backup count, sorted by date. Duplicate, import, reveal, or send <code>LoadShow</code> to a running console over OSC.</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2a10 10 0 1 0 0 20c1 0 1.7-.8 1.7-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.8-1.7 1.7-1.7H17a5 5 0 0 0 5-5C22 6 17.5 2 12 2z"/></svg>
+          <h3>Color themes</h3>
+          <p>Every theme drawn as a mini sequence sheet in its own colors, with the full color list one click away.</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>
+          <h3>Fixture types</h3>
+          <p>GDTF, MA3 XML and MA2 pxml in one list, with manufacturer, DMX modes, channel counts and revision read from the files.</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          <h3>Install new versions</h3>
+          <p>Finds onPC installers in Downloads, tells you which are new, and installs them with one click.</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19H7a5 5 0 1 1 1.1-9.9A6 6 0 0 1 19.6 11 4 4 0 0 1 17.5 19z"/></svg>
+          <h3>Cloud Sync</h3>
+          <p>Shows and library files sync between computers through a small server you host yourself. Mac and Windows share the same server.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="versions">
+    <div class="wrap split">
+      <div class="copy">
+        <h2>Every version, one list</h2>
+        <p>grandMA3 2.5 and later install as their own apps. 2.4 and earlier live as slots inside the grandMA3 launcher, which starts whichever slot was used last. The dashboard <strong>finds both kinds</strong> and launches the exact build you pick. It switches the launcher's slot for you when needed.</p>
+        <p>When two builds share a data folder (2.5.1.0 and 2.5.1.1, say), the Launch button starts the newest one and its menu lists the others. grandMA2 gets the same treatment, including its <strong>CleanStart</strong> build.</p>
+        <p>With a show open and OSC input on port 8000, <strong>Load</strong> sends <code>LoadShow</code> to the running console. Switching shows doesn't mean leaving the dashboard.</p>
+      </div>
+      <button class="shot" type="button" data-full="images/install.jpg" aria-label="Enlarge: installed builds list">
+        <img src="images/install.jpg" alt="The Install Versions page listing an available grandMA3 2.5.1.0 installer marked Installed, and below it every installed build: 2.5.1.1, 2.5.1.0, 2.4.2.2, 2.3.2.0, 2.2.5.2 and grandMA2 3.9.63.11 with its CleanStart build, each with a Launch button" loading="lazy" width="1600" height="932">
+      </button>
+    </div>
+  </section>
+
+  <section id="library">
+    <div class="wrap">
+      <h2>Library managers</h2>
+      <p class="section-lede">The shared <code>gma3_library</code> (and each version's own) shown as something you can browse. Drop files on the window to import them, and duplicate, reveal or bin what you don't need.</p>
+
+      <div class="gallery-tabs" role="tablist" aria-label="Library pages">
+        <button role="tab" id="tab-themes" aria-controls="panel-themes" aria-selected="true">Color themes</button>
+        <button role="tab" id="tab-fixtures" aria-controls="panel-fixtures" aria-selected="false" tabindex="-1">Fixture types</button>
+        <button role="tab" id="tab-datapools" aria-controls="panel-datapools" aria-selected="false" tabindex="-1">Datapools</button>
+      </div>
+
+      <div class="gallery-panel" role="tabpanel" id="panel-themes" aria-labelledby="tab-themes">
+        <div class="gallery-grid">
+          <button class="shot" type="button" data-full="images/themes.jpg" aria-label="Enlarge: color themes">
+            <img src="images/themes.jpg" alt="Eight color themes, each drawn as a small sequence sheet in that theme's colors with a strip of swatches below: catppuccin-latte, catppuccin-mocha, dark, default_daylight, default_legacy, solarized-dark, theme and tokyo-night" loading="lazy" width="1600" height="932">
+          </button>
+          <div class="copy">
+            <h3>See a theme before you load it</h3>
+            <p>Each card draws a sequence sheet (header, cues, the selected row) in the theme's own colors, so you can tell <em>dark</em> from <em>default_legacy</em> at a glance. Select one to see every color group with its RGBA value.</p>
+            <p>Themes made with <a href="https://jaylenjinx.github.io/ma3-theme-builder/">MA3 Theme Builder</a> show up here as soon as they're saved to the library.</p>
+          </div>
+        </div>
+      </div>
+      <div class="gallery-panel" role="tabpanel" id="panel-fixtures" aria-labelledby="tab-fixtures" hidden>
+        <div class="gallery-grid">
+          <button class="shot" type="button" data-full="images/fixtures.jpg" aria-label="Enlarge: fixture types">
+            <img src="images/fixtures.jpg" alt="A table of 31 fixture types with manufacturer, name, a GDTF, MA3 or MA2 format badge, number of modes, revision, date and size" loading="lazy" width="1600" height="932">
+          </button>
+          <div class="copy">
+            <h3>GDTF, MA3 and MA2 together</h3>
+            <p>The dashboard opens each GDTF file and reads its description, so the list shows the real manufacturer, name, revision and every DMX mode with its channel count. MA3 XML types are read the same way. MA2 <code>.pxml</code> files are listed by filename.</p>
+            <p>Filter by format or search across manufacturer, name and filename.</p>
+          </div>
+        </div>
+      </div>
+      <div class="gallery-panel" role="tabpanel" id="panel-datapools" aria-labelledby="tab-datapools" hidden>
+        <div class="gallery-grid">
+          <button class="shot" type="button" data-full="images/datapools.jpg" aria-label="Enlarge: datapools">
+            <img src="images/datapools.jpg" alt="Datapools page with a list of pools (bitmaps, generators, groups, macros, plugins, presets and more) and the 82 exported presets in a table with type, info, data version and size" loading="lazy" width="1600" height="932">
+          </button>
+          <div class="copy">
+            <h3>Everything you've exported</h3>
+            <p>Presets, plugins, macros, sequences, MAtricks and the rest, read from the exported XML: object type, preset mode, plugin version and author, and the data version it came from.</p>
+            <p>Plugins show their Lua source right in the window. Old <code>.bak</code> copies left over from plugin development stay hidden until you ask for them.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="sync">
+    <div class="wrap split flip">
+      <div class="copy">
+        <h2>Cloud Sync</h2>
+        <p>Keep showfiles, color themes, fixture types and datapools the same on every computer you program on. The server is a single file with no dependencies. Run it on anything that runs Docker, and reach it over a Cloudflare Tunnel so no ports are open.</p>
+        <ul class="clean">
+          <li><strong>Safe by default.</strong> If a file changed on two machines, both copies are kept. Deleted or overwritten files stay in the server's history.</li>
+          <li><strong>Patient with onPC.</strong> A show saved in the last 15 seconds waits for the next sync, so a half-written file is never sent.</li>
+          <li><strong>Big shows are fine.</strong> Uploads go in 16 MB chunks, under Cloudflare's 100 MB request limit.</li>
+          <li><strong>Mac and Windows together.</strong> Files are stored by product and version (<code>ma3/2.5.1/shows/…</code>), not by path, so a show saved on the Mac lands in the right folder on the PC.</li>
+        </ul>
+      </div>
+      <button class="shot" type="button" data-full="images/sync.jpg" aria-label="Enlarge: Cloud Sync settings">
+        <img src="images/sync.jpg" alt="Cloud Sync settings: server URL, token and computer name fields, toggles for grandMA3 showfiles, the grandMA3 library and grandMA2 showfiles, an auto-sync interval, and an activity log" loading="lazy" width="1600" height="932">
+      </button>
+    </div>
+
+    <div class="wrap" style="margin-top: 34px">
+      <div class="cols">
+        <div class="card">
+          <h3>Set up with Portainer</h3>
+          <ol class="steps">
+            <li>In Cloudflare Zero Trust, create a tunnel with a public hostname pointing at <code>http://sync:8787</code>, and copy its token.</li>
+            <li>In Portainer, go to <strong>Stacks → Add stack → Web editor</strong> and paste in <a href="https://github.com/jaylenjinx/ma3-dashboard/blob/main/sync-server/portainer-stack.yml"><code>portainer-stack.yml</code></a>.</li>
+            <li>Add the environment variables <code>SYNC_TOKEN</code> (any long random string) and <code>TUNNEL_TOKEN</code>.</li>
+            <li>Deploy, then enter the hostname and token under Cloud Sync in the app.</li>
+          </ol>
+          <p class="note">The stack uses the stock <code>node:22-alpine</code> image with the server built in, so there's nothing to build or pull from a private registry.</p>
+        </div>
+        <div class="card">
+          <h3>Or with docker compose</h3>
+          <pre><code>cd sync-server
+cat &gt; .env &lt;&lt;EOF
+SYNC_TOKEN=$(openssl rand -hex 32)
+TUNNEL_TOKEN=&lt;from Cloudflare&gt;
+EOF
+docker compose up -d --build</code></pre>
+          <p>For LAN-only use, drop the tunnel service and publish port 8787. The full setup and API are in the <a href="https://github.com/jaylenjinx/ma3-dashboard/tree/main/sync-server">server README</a>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="windows">
+    <div class="wrap split">
+      <div class="copy">
+        <h2>On Windows too</h2>
+        <p>The Windows version has the same pages, built with .NET and Avalonia. It ships as a single <code>MA3Dashboard.exe</code> that doesn't need .NET installed. It runs MA's own installers, which ask for administrator access themselves, and keeps the sync token encrypted with Windows DPAPI.</p>
+        <p>grandMA2 onPC runs natively on Windows, so it gets the same launch, CleanStart and showfile handling. A Mac and a PC can share one sync server.</p>
+      </div>
+      <button class="shot" type="button" data-full="images/windows.jpg" aria-label="Enlarge: the Windows version">
+        <img src="images/windows.jpg" alt="The Windows version in a light theme showing grandMA2 onPC 3.9.63 with its 12 showfiles, an Import button, a Shows Folder button and a Launch 3.9.63.11 split button" loading="lazy" width="1600" height="1010">
+      </button>
+    </div>
+    <div class="wrap" style="margin-top: 30px">
+      <div class="card table-scroll">
+        <table>
+          <thead><tr><th>Looks for</th><th>On a Mac</th><th>On Windows</th></tr></thead>
+          <tbody>
+            <tr><td>grandMA3 data</td><td><code>~/MALightingTechnology/gma3_x.y.z</code></td><td><code>C:\ProgramData\MALightingTechnology\gma3_x.y.z</code> (changeable in settings)</td></tr>
+            <tr><td>grandMA3 programs</td><td><code>/Applications/grandMA3 onPC *.app</code>, launcher slots</td><td><code>Program Files\MALightingTechnology\gma3_x.y.z</code>, Start Menu shortcuts</td></tr>
+            <tr><td>grandMA2</td><td>CrossOver bottles</td><td><code>Program Files\MA Lighting Technologies\grandma</code></td></tr>
+            <tr><td>Installers</td><td>Downloads, <code>installation_packages</code></td><td>Downloads, <code>installation_packages</code>, <code>gMA2onPC_v*.exe</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="wrap">
+      <h2>Install</h2>
+      <p class="section-lede">Download the build for your computer from the <a href="https://github.com/jaylenjinx/ma3-dashboard/releases/latest">latest release</a>.</p>
+      <div class="cols">
+        <div class="card">
+          <h3>Mac</h3>
+          <ol class="steps">
+            <li>Unzip <code>MA3-Dashboard-mac.zip</code> and drag <strong>MA3 Dashboard</strong> to Applications.</li>
+            <li>The app isn't notarized, so the first time, right-click it, choose <strong>Open</strong>, then <strong>Open</strong> again.</li>
+            <li>To let it list installers in Downloads, allow access when macOS asks.</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h3>Windows</h3>
+          <ol class="steps">
+            <li>Unzip <code>MA3Dashboard-win-x64.zip</code> anywhere, for example <code>C:\Tools\MA3Dashboard</code>.</li>
+            <li>Run <code>MA3Dashboard.exe</code>. If SmartScreen warns about an unknown publisher, choose <strong>More info → Run anyway</strong>.</li>
+            <li>The <code>sync-server</code> folder next to the exe holds the server setup files.</li>
+          </ol>
+        </div>
+      </div>
+
+      <h3 style="margin-top: 40px">Build it yourself</h3>
+      <div class="cols">
+        <pre><code># Mac (Swift 6, Xcode command line tools)
+./build-app.sh            # → build/MA3 Dashboard.app
+./build-app.sh --install  # also copies it to ~/Applications</code></pre>
+        <pre><code># Windows (.NET 10 SDK, on any OS)
+cd windows
+./publish.sh              # → dist/MA3Dashboard-win-x64.zip</code></pre>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Made by <a href="https://jaylenjinx.github.io/projects/">Jay</a> to make gigs a bit easier.</span>
+    <span>Not affiliated with MA Lighting. grandMA3 and grandMA2 are trademarks of MA Lighting Technology GmbH.</span>
+  </div>
+</footer>
+
+<dialog id="lightbox" aria-label="Screenshot">
+  <form method="dialog"><button aria-label="Close">×</button></form>
+  <img alt="">
+</dialog>
+
+<script>
+// Library tabs (arrow keys move between them).
+const tabs = [...document.querySelectorAll('[role="tab"]')];
+function select(tab) {
+  for (const t of tabs) {
+    const on = t === tab;
+    t.setAttribute('aria-selected', on);
+    t.tabIndex = on ? 0 : -1;
+    document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+  }
+}
+tabs.forEach((t, i) => {
+  t.addEventListener('click', () => select(t));
+  t.addEventListener('keydown', e => {
+    const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+    if (!d) return;
+    const next = tabs[(i + d + tabs.length) % tabs.length];
+    select(next); next.focus();
+  });
+});
+
+// Click a screenshot to see it full size.
+const box = document.getElementById('lightbox');
+const boxImg = box.querySelector('img');
+document.querySelectorAll('.shot').forEach(b => b.addEventListener('click', () => {
+  boxImg.src = b.dataset.full;
+  boxImg.alt = b.querySelector('img').alt;
+  box.showModal();
+}));
+box.addEventListener('click', e => { if (e.target === box) box.close(); });
+</script>
+</body>
+</html>

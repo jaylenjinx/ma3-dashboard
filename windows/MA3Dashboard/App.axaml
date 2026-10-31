@@ -1,0 +1,76 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mi="using:Material.Icons.Avalonia"
+             x:Class="MA3Dashboard.App"
+             RequestedThemeVariant="Default">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="SidebarBrush" Color="#F3F3F5" />
+                    <SolidColorBrush x:Key="PaneBrush" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="CardBrush" Color="#F7F7F9" />
+                    <SolidColorBrush x:Key="HairlineBrush" Color="#1F000000" />
+                    <SolidColorBrush x:Key="MutedBrush" Color="#6B6B70" />
+                    <SolidColorBrush x:Key="CodeBrush" Color="#F2F2F4" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="SidebarBrush" Color="#1E1E21" />
+                    <SolidColorBrush x:Key="PaneBrush" Color="#26262A" />
+                    <SolidColorBrush x:Key="CardBrush" Color="#2E2E33" />
+                    <SolidColorBrush x:Key="HairlineBrush" Color="#24FFFFFF" />
+                    <SolidColorBrush x:Key="MutedBrush" Color="#9A9AA2" />
+                    <SolidColorBrush x:Key="CodeBrush" Color="#1C1C1F" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+            <SolidColorBrush x:Key="AmberBrush" Color="#E8A33D" />
+            <SolidColorBrush x:Key="RunningBrush" Color="#34C759" />
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme>
+            <FluentTheme.Palettes>
+                <ColorPaletteResources x:Key="Light" Accent="#D08A22" />
+                <ColorPaletteResources x:Key="Dark" Accent="#E8A33D" />
+            </FluentTheme.Palettes>
+        </FluentTheme>
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+        <mi:MaterialIconStyles />
+
+        <Style Selector="TextBlock.h1">
+            <Setter Property="FontSize" Value="22" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="TextBlock.sub">
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+            <Setter Property="FontSize" Value="12.5" />
+        </Style>
+        <Style Selector="TextBlock.section">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="{DynamicResource CardBrush}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="14" />
+        </Style>
+        <Style Selector="Button.tool, SplitButton.tool">
+            <Setter Property="Padding" Value="10,5" />
+        </Style>
+        <Style Selector="mi|MaterialIcon">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+        </Style>
+        <Style Selector="DataGrid">
+            <Setter Property="GridLinesVisibility" Value="None" />
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="CanUserResizeColumns" Value="True" />
+            <Setter Property="IsReadOnly" Value="True" />
+            <Setter Property="SelectionMode" Value="Single" />
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+    </Application.Styles>
+</Application>

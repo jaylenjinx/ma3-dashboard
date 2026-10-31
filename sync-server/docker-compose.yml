@@ -1,0 +1,21 @@
+services:
+  sync:
+    build: .
+    restart: unless-stopped
+    environment:
+      SYNC_TOKEN: ${SYNC_TOKEN:?set SYNC_TOKEN in .env}
+      KEEP_VERSIONS: ${KEEP_VERSIONS:-10}
+    volumes:
+      - ./data:/data
+    # Uncomment to reach the server on your LAN without the tunnel:
+    # ports:
+    #   - "8787:8787"
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?set TUNNEL_TOKEN in .env}
+    depends_on:
+      - sync

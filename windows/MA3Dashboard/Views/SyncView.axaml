@@ -1,0 +1,120 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MA3Dashboard.ViewModels"
+             xmlns:v="using:MA3Dashboard.Views"
+             xmlns:mi="using:Material.Icons.Avalonia"
+             x:Class="MA3Dashboard.Views.SyncView"
+             x:DataType="vm:SyncViewModel">
+    <ScrollViewer>
+        <StackPanel Spacing="18" MaxWidth="820" HorizontalAlignment="Left">
+            <StackPanel Spacing="3">
+                <TextBlock Text="Cloud Sync" Classes="h1" />
+                <TextBlock Text="{Binding ServerSubtitle}" Classes="sub" />
+            </StackPanel>
+
+            <!-- Status -->
+            <Border Classes="card">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <mi:MaterialIcon Kind="Cloud" Width="30" Height="30" Margin="0,0,14,0" Foreground="{DynamicResource AmberBrush}" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Text="{Binding Headline}" FontWeight="SemiBold" FontSize="15" />
+                        <TextBlock Text="{Binding Detail}" Classes="sub" TextWrapping="Wrap" IsVisible="{Binding Detail, Converter={x:Static v:Conv.NotNull}}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                        <ProgressBar IsIndeterminate="True" Width="60" MinWidth="60" IsVisible="{Binding Syncing}" />
+                        <Button Classes="accent" Command="{Binding SyncNowCommand}" IsEnabled="{Binding CanSync}">
+                            <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="Sync" /><TextBlock Text="Sync Now" /></StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Server -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="SERVER" Classes="section" />
+                <Border Classes="card">
+                    <Grid ColumnDefinitions="150,*" RowDefinitions="Auto,Auto,Auto,Auto" >
+                        <TextBlock Text="Server URL" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Text="{Binding ServerUrl}" PlaceholderText="https://masync.example.com" Margin="0,0,0,8" />
+                        <TextBlock Grid.Row="1" Text="Token" VerticalAlignment="Center" />
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Token}" PasswordChar="•" PlaceholderText="SYNC_TOKEN from the server's .env" Margin="0,0,0,8" />
+                        <TextBlock Grid.Row="2" Text="This computer's name" VerticalAlignment="Center" />
+                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding DeviceName}" Margin="0,0,0,8" ToolTip.Tip="Shown on the server and in conflict copies" />
+                        <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                            <Button Command="{Binding TestCommand}" IsEnabled="{Binding CanTest}" Content="Test Connection" />
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" IsVisible="{Binding TestResult, Converter={x:Static v:Conv.NotNull}}">
+                                <mi:MaterialIcon Kind="CheckCircle" Foreground="{DynamicResource RunningBrush}" IsVisible="{Binding TestOk}" />
+                                <mi:MaterialIcon Kind="CloseOctagon" Foreground="IndianRed" IsVisible="{Binding !TestOk}" />
+                                <TextBlock Text="{Binding TestResult}" />
+                            </StackPanel>
+                            <Button Command="{Binding OpenServerHelpCommand}" Content="Server Setup Files" ToolTip.Tip="Docker + Cloudflare Tunnel setup for the sync server" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+            <!-- What to sync -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="WHAT TO SYNC" Classes="section" />
+                <Border Classes="card">
+                    <StackPanel Spacing="6">
+                        <CheckBox IsChecked="{Binding Ma3Shows}" Content="grandMA3 showfiles (every version)" />
+                        <CheckBox IsChecked="{Binding Ma3Library}" Content="grandMA3 library: color themes, fixture types, datapools" />
+                        <CheckBox IsChecked="{Binding Ma2Shows}" Content="grandMA2 showfiles" />
+                        <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,6,0,0">
+                            <TextBlock Text="Sync automatically" VerticalAlignment="Center" />
+                            <ComboBox ItemsSource="{Binding Intervals}" SelectedIndex="{Binding AutoSyncIndex}" MinWidth="170">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate><TextBlock Text="{Binding Converter={x:Static v:Conv.Interval}}" /></DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                        <TextBlock Classes="sub" TextWrapping="Wrap" Margin="0,6,0,0"
+                                   Text="Shows are only synced for versions installed on this computer. Files saved in the last 15 seconds wait for the next sync. When a file changed on two machines, both copies are kept and the other one is renamed “(conflict …)”. Deleted or overwritten files stay in the server's history. Works with the Mac app on the same server." />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- Folders -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="FOLDERS" Classes="section" />
+                <Border Classes="card">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="grandMA3 data folder" />
+                        <Grid ColumnDefinitions="*,Auto,Auto">
+                            <TextBox Text="{Binding DataRoot}" PlaceholderText="{Binding DataRootPlaceholder}" />
+                            <Button Grid.Column="1" Margin="8,0,0,0" Command="{Binding BrowseDataRootCommand}" Content="Choose…" />
+                            <Button Grid.Column="2" Margin="8,0,0,0" Command="{Binding ResetDataRootCommand}" Content="Default" />
+                        </Grid>
+                        <TextBlock Classes="sub" TextWrapping="Wrap"
+                                   Text="The folder that holds gma3_x.y.z and gma3_library. Leave blank for the default." />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- Activity -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="ACTIVITY" Classes="section" />
+                <Border Classes="card">
+                    <Panel>
+                        <TextBlock Text="Nothing yet" Classes="sub" IsVisible="{Binding !Log.Count}" />
+                        <ItemsControl ItemsSource="{Binding Log}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="22,*,Auto" Margin="0,3">
+                                        <TextBlock Text="{Binding Symbol}" Foreground="{Binding Kind, Converter={x:Static v:Conv.LogBrush}}" />
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Path}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding Detail}" Classes="sub" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2" Text="{Binding TimeText}" Classes="sub" Margin="10,0,0,0" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Panel>
+                </Border>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
