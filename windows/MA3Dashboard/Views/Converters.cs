@@ -83,5 +83,6 @@ public static class Conv
     {
         "Installed" => Brushes.SeaGreen, "New" => new SolidColorBrush(Color.Parse("#E8A33D")), _ => Brushes.Gray,
     });
-    public static readonly IValueConverter Modes = new FuncValueConverter<List<FixtureMode>, string>(m => m == null ? "" : string.Join("\n", m.Select(x => $"{x.Name} · {x.Channels} ch")));
+    public static readonly IValueConverter InstallLabel = new FuncValueConverter<bool, string>(installed => installed ? "Reinstall" : "Install");
+    public static readonly IValueConverter Modes =new FuncValueConverter<List<FixtureMode>, string>(m => m == null ? "" : string.Join("\n", m.Select(x => $"{x.Name} · {x.Channels} ch")));
 }

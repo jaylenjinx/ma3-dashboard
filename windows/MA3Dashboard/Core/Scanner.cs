@@ -56,13 +56,16 @@ public sealed record MABuild(Product Product, string FullVersion, BuildKind Kind
     public string Name => Kind switch
     {
         BuildKind.MacLauncherSlot => $"grandMA3 ({FullVersion})",
-        BuildKind.Exe or BuildKind.Shortcut => $"{Product.Title()} {FullVersion}{(CleanStart ? " CleanStart" : "")}",
+        // MA's own shortcut names: "grandMA3 onPC 2.4.2.2 Clean Start", "grandMA2 onPC 3.9.63.11 CleanStart".
+        BuildKind.Exe or BuildKind.Shortcut => $"{Product.Title()} {FullVersion}{(!CleanStart ? "" : Product == Product.Ma3 ? " Clean Start" : " CleanStart")}",
         _ => System.IO.Path.GetFileNameWithoutExtension(Path),
     };
 
     public bool Owns(RunningProcess p)
     {
-        if (Product == Product.Ma2) return !CleanStart && p.IsMa2 && (InstallDir == null || p.Command.StartsWith(InstallDir, StringComparison.OrdinalIgnoreCase) || !Platform.IsWindows);
+        // A running process belongs to the normal build; its CleanStart twin starts the same executable.
+        if (CleanStart) return false;
+        if (Product == Product.Ma2) return p.IsMa2 && (InstallDir == null || p.Command.StartsWith(InstallDir, StringComparison.OrdinalIgnoreCase) || !Platform.IsWindows);
         if (p.IsMa2) return false;
         return Kind switch
         {
@@ -129,11 +132,14 @@ public static class Scanner
     public static List<MABuild> FindMa3Builds()
     {
         var builds = Platform.IsWindows ? FindWindowsMa3Builds() : Platform.IsMac ? FindMacMa3Builds() : [];
-        return builds.OrderByDescending(b => b.FullVersion, VersionComparer.Instance).ToList();
+        return builds.OrderByDescending(b => b.FullVersion, VersionComparer.Instance).ThenBy(b => b.CleanStart).ToList();
     }
 
-    /// onPC installs as ...\MALightingTechnology\gma3_x.y.z\ under Program Files. We look for its executable
-    /// there, and fall back to the Start Menu shortcuts MA's installer creates.
+    /// onPC installs as ...\MALightingTechnology\gma3_x.y.z\bin\ under Program Files. MA's Start Menu shortcuts run
+    /// "app_system.exe HOSTTYPE=onPC" (plus "CleanStart" for Clean Start), which starts app_gma3.exe as the onPC host.
+    /// Starting app_gma3.exe by itself runs a generic "GMA3App" host with its own config folder: it skips the
+    /// last show and opens a new empty one. So we launch through app_system.exe the same way, and only fall back to
+    /// app_gma3.exe when app_system.exe is missing, then to the Start Menu shortcuts.
     static List<MABuild> FindWindowsMa3Builds()
     {
         var builds = new List<MABuild>();
@@ -147,14 +153,24 @@ public static class Scanner
             var m = Ma3Dir.Match(System.IO.Path.GetFileName(dir));
             if (!m.Success || FindExe(dir, ["app_gma3.exe", "gma3onpc.exe", "onpc.exe", "grandma3*.exe"], 3) is not { } exe) continue;
             var full = FileVersion(exe) is { } fv && fv.StartsWith(m.Groups[1].Value) ? fv : m.Groups[1].Value;
-            builds.Add(new MABuild(Product.Ma3, full, BuildKind.Exe, exe)
-                { WorkingDir = System.IO.Path.GetDirectoryName(exe), InstallDir = dir });
+            var bin = System.IO.Path.GetDirectoryName(exe)!;
+            var system = System.IO.Path.Combine(bin, "app_system.exe");
+            if (!File.Exists(system))
+            {
+                builds.Add(new MABuild(Product.Ma3, full, BuildKind.Exe, exe) { WorkingDir = bin, InstallDir = dir });
+                continue;
+            }
+            builds.Add(new MABuild(Product.Ma3, full, BuildKind.Exe, system) { Arguments = "HOSTTYPE=onPC", WorkingDir = bin, InstallDir = dir });
+            builds.Add(new MABuild(Product.Ma3, full, BuildKind.Exe, system)
+                { Arguments = "HOSTTYPE=onPC CleanStart", WorkingDir = bin, InstallDir = dir, CleanStart = true });
         }
         foreach (var lnk in StartMenuShortcuts("grandma3 onpc"))
         {
-            var v = VersionRx.Match(System.IO.Path.GetFileNameWithoutExtension(lnk));
-            if (!v.Success || builds.Any(b => b.DataVersion == string.Join('.', v.Value.Split('.').Take(3)))) continue;
-            builds.Add(new MABuild(Product.Ma3, v.Value, BuildKind.Shortcut, lnk));
+            var name = System.IO.Path.GetFileNameWithoutExtension(lnk);
+            var v = VersionRx.Match(name);
+            var clean = name.Contains("clean", StringComparison.OrdinalIgnoreCase);
+            if (!v.Success || builds.Any(b => b.DataVersion == string.Join('.', v.Value.Split('.').Take(3)) && b.CleanStart == clean)) continue;
+            builds.Add(new MABuild(Product.Ma3, v.Value, BuildKind.Shortcut, lnk) { CleanStart = clean });
         }
         return builds;
     }

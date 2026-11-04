@@ -7,7 +7,7 @@
              x:DataType="vm:ThemesViewModel">
     <Grid RowDefinitions="Auto,*">
         <Grid ColumnDefinitions="*,Auto">
-            <StackPanel Spacing="3">
+            <StackPanel Spacing="3" Margin="0,0,16,0">
                 <TextBlock Text="Color Themes" Classes="h1" />
                 <TextBlock Text="{Binding Subtitle}" Classes="sub" />
             </StackPanel>
@@ -28,6 +28,17 @@
                         <Setter Property="Padding" Value="0" />
                         <Setter Property="Margin" Value="0,0,12,12" />
                         <Setter Property="CornerRadius" Value="10" />
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
+                    </Style>
+                    <!-- The card is the item, so mark the selected one with an amber edge instead of Fluent's fill behind it. -->
+                    <Style Selector="ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
+                        <Setter Property="Background" Value="Transparent" />
+                    </Style>
+                    <Style Selector="ListBoxItem:pointerover Border.card">
+                        <Setter Property="BorderBrush" Value="{DynamicResource MutedBrush}" />
+                    </Style>
+                    <Style Selector="ListBoxItem:selected Border.card">
+                        <Setter Property="BorderBrush" Value="{DynamicResource AmberBrush}" />
                     </Style>
                 </ListBox.Styles>
                 <ListBox.ItemTemplate>
@@ -90,7 +101,7 @@
                         <Button Command="{Binding TrashCommand}" ToolTip.Tip="Move to Recycle Bin"><mi:MaterialIcon Kind="TrashCanOutline" /></Button>
                     </StackPanel>
                     <ScrollViewer Grid.Row="2">
-                        <ItemsControl ItemsSource="{Binding Selected.Groups}">
+                        <ItemsControl ItemsSource="{Binding Selected.Groups}" Margin="0,0,14,0">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Margin="0,6,0,8">

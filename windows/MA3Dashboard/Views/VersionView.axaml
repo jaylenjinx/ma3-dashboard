@@ -9,14 +9,13 @@
     <Grid RowDefinitions="Auto,Auto,*">
         <!-- Header -->
         <Grid ColumnDefinitions="*,Auto">
-            <StackPanel Spacing="3">
-                <TextBlock Text="{Binding Title}" Classes="h1" />
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Ellipse Width="8" Height="8" Fill="{DynamicResource RunningBrush}" IsVisible="{Binding IsRunning}" VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding Status}" Classes="sub" />
-                    <TextBlock Text="·" Classes="sub" IsVisible="{Binding BackupText, Converter={x:Static v:Conv.NotEmpty}}" />
-                    <TextBlock Text="{Binding BackupText}" Classes="sub" />
-                </StackPanel>
+            <StackPanel Spacing="3" Margin="0,0,16,0">
+                <TextBlock Text="{Binding Title}" Classes="h1" TextTrimming="CharacterEllipsis" />
+                <!-- One trimmed line: a horizontal StackPanel let "Running … (pid …) · 3 backups" run under the buttons. -->
+                <Grid ColumnDefinitions="Auto,*">
+                    <Ellipse Width="8" Height="8" Margin="0,0,8,0" Fill="{DynamicResource RunningBrush}" IsVisible="{Binding IsRunning}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Text="{Binding StatusLine}" Classes="sub" ToolTip.Tip="{Binding StatusLine}" />
+                </Grid>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                 <Button Classes="tool" Command="{Binding ImportShowsCommand}" ToolTip.Tip="Import showfiles into this version">
@@ -50,32 +49,33 @@
 
         <!-- Shows -->
         <Grid Grid.Row="2" Margin="0,14,0,0">
-            <DataGrid x:Name="Grid" ItemsSource="{Binding Shows}" SelectedItem="{Binding SelectedShow}">
+            <DataGrid x:Name="Grid" ItemsSource="{Binding Shows}" SelectedItem="{Binding SelectedShow}" IsVisible="{Binding !!Shows.Count}">
                 <DataGrid.Columns>
-                    <DataGridTemplateColumn Header="Show" Width="*" SortMemberPath="Name">
+                    <DataGridTemplateColumn Header="Show" Width="*" MinWidth="200" SortMemberPath="Name">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="10,0" VerticalAlignment="Center">
-                                    <mi:MaterialIcon Kind="FileDocumentOutline" Foreground="{DynamicResource MutedBrush}" />
-                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding Extension}" Classes="sub" VerticalAlignment="Center" />
-                                </StackPanel>
+                                <Grid ColumnDefinitions="Auto,Auto,Auto" Margin="10,0" VerticalAlignment="Center">
+                                    <mi:MaterialIcon Kind="FileDocumentOutline" Foreground="{DynamicResource MutedBrush}" Margin="0,0,8,0" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Extension}" Classes="sub" VerticalAlignment="Center" Margin="6,0,0,0" />
+                                </Grid>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="Modified" Width="170" Binding="{Binding ModifiedText}" SortMemberPath="Modified" />
-                    <DataGridTextColumn Header="Size" Width="100" Binding="{Binding SizeText}" SortMemberPath="Size" />
-                    <DataGridTemplateColumn Header="" Width="240">
+                    <DataGridTextColumn Header="Modified" Width="160" Binding="{Binding ModifiedText}" SortMemberPath="Modified" />
+                    <DataGridTextColumn Header="Size" Width="90" Binding="{Binding SizeText}" SortMemberPath="Size" />
+                    <!-- Three icon buttons, plus Load while onPC is listening for OSC. -->
+                    <DataGridTemplateColumn Header="" Width="SizeToCells" MinWidth="120">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right" Margin="0,0,8,0">
                                     <Button Padding="8,3" Command="{Binding $parent[UserControl].DataContext.LoadCommand}" CommandParameter="{Binding}"
                                             IsVisible="{Binding $parent[UserControl].DataContext.CanLoad}" ToolTip.Tip="LoadShow over OSC">Load</Button>
-                                    <Button Padding="6,3" Command="{Binding $parent[UserControl].DataContext.DuplicateCommand}" CommandParameter="{Binding}" ToolTip.Tip="Duplicate">
+                                    <Button Classes="icon" Command="{Binding $parent[UserControl].DataContext.DuplicateCommand}" CommandParameter="{Binding}" ToolTip.Tip="Duplicate">
                                         <mi:MaterialIcon Kind="ContentCopy" /></Button>
-                                    <Button Padding="6,3" Command="{Binding $parent[UserControl].DataContext.RevealCommand}" CommandParameter="{Binding}" ToolTip.Tip="Show in folder">
+                                    <Button Classes="icon" Command="{Binding $parent[UserControl].DataContext.RevealCommand}" CommandParameter="{Binding}" ToolTip.Tip="Show in folder">
                                         <mi:MaterialIcon Kind="FolderSearchOutline" /></Button>
-                                    <Button Padding="6,3" Command="{Binding $parent[UserControl].DataContext.TrashCommand}" CommandParameter="{Binding}" ToolTip.Tip="Move to Recycle Bin">
+                                    <Button Classes="icon" Command="{Binding $parent[UserControl].DataContext.TrashCommand}" CommandParameter="{Binding}" ToolTip.Tip="Move to Recycle Bin">
                                         <mi:MaterialIcon Kind="TrashCanOutline" /></Button>
                                 </StackPanel>
                             </DataTemplate>

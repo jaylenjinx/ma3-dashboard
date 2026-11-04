@@ -13,6 +13,15 @@
                     <SolidColorBrush x:Key="HairlineBrush" Color="#1F000000" />
                     <SolidColorBrush x:Key="MutedBrush" Color="#6B6B70" />
                     <SolidColorBrush x:Key="CodeBrush" Color="#F2F2F4" />
+                    <SolidColorBrush x:Key="RowAltBrush" Color="#07000000" />
+                    <SolidColorBrush x:Key="RowHoverBrush" Color="#0D000000" />
+                    <SolidColorBrush x:Key="RowSelectedBrush" Color="#29D08A22" />
+                    <SolidColorBrush x:Key="NavHoverBrush" Color="#0F000000" />
+                    <SolidColorBrush x:Key="NavSelectedBrush" Color="#2ED08A22" />
+                    <SolidColorBrush x:Key="NavSelectedTextBrush" Color="#1A1A1C" />
+                    <SolidColorBrush x:Key="AccentFillBrush" Color="#E09A35" />
+                    <SolidColorBrush x:Key="AccentFillHoverBrush" Color="#E8A646" />
+                    <SolidColorBrush x:Key="AccentFillPressedBrush" Color="#C98727" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="SidebarBrush" Color="#1E1E21" />
@@ -21,10 +30,21 @@
                     <SolidColorBrush x:Key="HairlineBrush" Color="#24FFFFFF" />
                     <SolidColorBrush x:Key="MutedBrush" Color="#9A9AA2" />
                     <SolidColorBrush x:Key="CodeBrush" Color="#1C1C1F" />
+                    <SolidColorBrush x:Key="RowAltBrush" Color="#08FFFFFF" />
+                    <SolidColorBrush x:Key="RowHoverBrush" Color="#10FFFFFF" />
+                    <SolidColorBrush x:Key="RowSelectedBrush" Color="#33E8A33D" />
+                    <SolidColorBrush x:Key="NavHoverBrush" Color="#12FFFFFF" />
+                    <SolidColorBrush x:Key="NavSelectedBrush" Color="#38E8A33D" />
+                    <SolidColorBrush x:Key="NavSelectedTextBrush" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="AccentFillBrush" Color="#E8A33D" />
+                    <SolidColorBrush x:Key="AccentFillHoverBrush" Color="#F0B257" />
+                    <SolidColorBrush x:Key="AccentFillPressedBrush" Color="#D08F2E" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
             <SolidColorBrush x:Key="AmberBrush" Color="#E8A33D" />
             <SolidColorBrush x:Key="RunningBrush" Color="#34C759" />
+            <!-- Text on amber: white on #E8A33D is about 2:1 contrast, this is about 9:1. -->
+            <SolidColorBrush x:Key="AccentTextBrush" Color="#1E1607" />
         </ResourceDictionary>
     </Application.Resources>
 
@@ -45,6 +65,8 @@
         <Style Selector="TextBlock.sub">
             <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
             <Setter Property="FontSize" Value="12.5" />
+            <!-- Page subtitles sit next to the header buttons; trim instead of running under them. -->
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
         </Style>
         <Style Selector="TextBlock.section">
             <Setter Property="FontSize" Value="12" />
@@ -54,11 +76,118 @@
         </Style>
         <Style Selector="Border.card">
             <Setter Property="Background" Value="{DynamicResource CardBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource HairlineBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Padding" Value="14" />
         </Style>
+
+        <!-- Sidebar: a soft amber tint for the current page instead of Fluent's solid accent fill. -->
+        <Style Selector="ListBox.nav ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Transitions">
+                <Transitions><BrushTransition Property="Background" Duration="0:0:0.1" /></Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource NavHoverBrush}" />
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter,
+                         ListBox.nav ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter,
+                         ListBox.nav ListBoxItem:selected:pressed /template/ ContentPresenter#PART_ContentPresenter,
+                         ListBox.nav ListBoxItem:selected:focus /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource NavSelectedBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource NavSelectedTextBrush}" />
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:selected TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:selected TextBlock.sub">
+            <Setter Property="FontWeight" Value="Normal" />
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <!-- Tables: headers sit on the page like the Mac app (Fluent's dark header is solid black), with a
+             hairline underneath, quiet zebra rows and a tinted selection. -->
+        <Style Selector="DataGridColumnHeader">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="SeparatorBrush" Value="{DynamicResource HairlineBrush}" />
+            <Setter Property="Padding" Value="10,0,0,0" />
+            <Setter Property="MinHeight" Value="30" />
+        </Style>
+        <Style Selector="DataGridColumnHeader:pointerover /template/ Grid#PART_ColumnHeaderRoot">
+            <Setter Property="Background" Value="{DynamicResource RowHoverBrush}" />
+        </Style>
+        <Style Selector="DataGrid /template/ Rectangle#PART_ColumnHeadersAndRowsSeparator">
+            <Setter Property="Fill" Value="{DynamicResource HairlineBrush}" />
+            <Setter Property="Height" Value="1" />
+        </Style>
+        <Style Selector="DataGridRow">
+            <Setter Property="MinHeight" Value="36" />
+        </Style>
+        <Style Selector="DataGridRow:nth-child(2n)">
+            <Setter Property="Background" Value="{DynamicResource RowAltBrush}" />
+        </Style>
+        <Style Selector="DataGridRow:pointerover /template/ Rectangle#BackgroundRectangle">
+            <Setter Property="Fill" Value="{DynamicResource RowHoverBrush}" />
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="DataGridRow:selected /template/ Rectangle#BackgroundRectangle,
+                         DataGridRow:selected:pointerover /template/ Rectangle#BackgroundRectangle,
+                         DataGridRow:selected:focus /template/ Rectangle#BackgroundRectangle">
+            <Setter Property="Fill" Value="{DynamicResource RowSelectedBrush}" />
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="DataGridCell">
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style Selector="DataGridCell:current /template/ Grid#FocusVisual, DataGridCell:focus /template/ Grid#FocusVisual">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+
+        <!-- Small icon buttons in rows and detail panes. -->
+        <Style Selector="Button.icon">
+            <Setter Property="Padding" Value="6,4" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+        </Style>
+        <Style Selector="Button.icon:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource RowHoverBrush}" />
+        </Style>
         <Style Selector="Button.tool, SplitButton.tool">
             <Setter Property="Padding" Value="10,5" />
+        </Style>
+
+        <!-- Accent buttons: amber with dark text. Fluent has no accent look for SplitButton, so the Launch
+             split button (several builds, or CleanStart) got a plain gray one; style its two halves the same. -->
+        <Style Selector="Button.accent /template/ ContentPresenter#PART_ContentPresenter,
+                         SplitButton.accent /template/ Button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AccentFillBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.accent:pointerover /template/ ContentPresenter#PART_ContentPresenter,
+                         SplitButton.accent /template/ Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AccentFillHoverBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}" />
+        </Style>
+        <Style Selector="Button.accent:pressed /template/ ContentPresenter#PART_ContentPresenter,
+                         SplitButton.accent /template/ Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AccentFillPressedBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}" />
+        </Style>
+        <!-- Disabled accent buttons look like any disabled button, not a dimmed brown. -->
+        <Style Selector="Button.accent:disabled /template/ ContentPresenter#PART_ContentPresenter,
+                         SplitButton.accent:disabled /template/ Button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ButtonBackgroundDisabled}" />
+            <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundDisabled}" />
+        </Style>
+        <Style Selector="SplitButton.accent /template/ Button#PART_SecondaryButton">
+            <Setter Property="Margin" Value="1,0,0,0" />
         </Style>
         <Style Selector="mi|MaterialIcon">
             <Setter Property="Width" Value="16" />

@@ -6,7 +6,8 @@
              x:Class="MA3Dashboard.Views.SyncView"
              x:DataType="vm:SyncViewModel">
     <ScrollViewer>
-        <StackPanel Spacing="18" MaxWidth="820" HorizontalAlignment="Left">
+        <!-- Right margin keeps the cards clear of the overlay scrollbar. -->
+        <StackPanel Spacing="18" MaxWidth="820" HorizontalAlignment="Left" Margin="0,0,16,0">
             <StackPanel Spacing="3">
                 <TextBlock Text="Cloud Sync" Classes="h1" />
                 <TextBlock Text="{Binding ServerSubtitle}" Classes="sub" />
@@ -33,7 +34,7 @@
             <StackPanel Spacing="8">
                 <TextBlock Text="SERVER" Classes="section" />
                 <Border Classes="card">
-                    <Grid ColumnDefinitions="150,*" RowDefinitions="Auto,Auto,Auto,Auto" >
+                    <Grid ColumnDefinitions="172,*" RowDefinitions="Auto,Auto,Auto,Auto">
                         <TextBlock Text="Server URL" VerticalAlignment="Center" />
                         <TextBox Grid.Column="1" Text="{Binding ServerUrl}" PlaceholderText="https://masync.example.com" Margin="0,0,0,8" />
                         <TextBlock Grid.Row="1" Text="Token" VerticalAlignment="Center" />

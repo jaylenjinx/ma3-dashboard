@@ -21,10 +21,12 @@
     <Grid ColumnDefinitions="250,*">
         <!-- Sidebar -->
         <Border Background="{DynamicResource SidebarBrush}" BorderBrush="{DynamicResource HairlineBrush}" BorderThickness="0,0,1,0">
-            <ListBox ItemsSource="{Binding Sidebar}" SelectedItem="{Binding SelectedItem}" Background="Transparent" Padding="8,10">
+            <ListBox Classes="nav" ItemsSource="{Binding Sidebar}" SelectedItem="{Binding SelectedItem}" Background="Transparent" Padding="8,10"
+                     AutomationProperties.Name="Sidebar">
                 <ListBox.Styles>
                     <Style Selector="ListBoxItem">
                         <Setter Property="IsEnabled" Value="{Binding IsSelectable}" />
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
                         <Setter Property="Padding" Value="10,6" />
                         <Setter Property="CornerRadius" Value="6" />
                         <Setter Property="Margin" Value="0,1" />
