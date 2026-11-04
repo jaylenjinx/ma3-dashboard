@@ -7,7 +7,7 @@
              x:DataType="vm:FixturesViewModel">
     <Grid RowDefinitions="Auto,Auto,*">
         <Grid ColumnDefinitions="*,Auto">
-            <StackPanel Spacing="3">
+            <StackPanel Spacing="3" Margin="0,0,16,0">
                 <TextBlock Text="Fixture Types" Classes="h1" />
                 <TextBlock Text="{Binding Subtitle}" Classes="sub" />
             </StackPanel>
@@ -26,10 +26,11 @@
         </StackPanel>
 
         <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
-            <DataGrid ItemsSource="{Binding Filtered}" SelectedItem="{Binding Selected}">
+            <DataGrid ItemsSource="{Binding Filtered}" SelectedItem="{Binding Selected}" IsVisible="{Binding !!Filtered.Count}">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Manufacturer" Width="*" Binding="{Binding Manufacturer}" />
-                    <DataGridTextColumn Header="Name" Width="1.6*" Binding="{Binding Name}" />
+                    <!-- Minimum widths so names stay readable next to the detail pane; the grid scrolls sideways instead. -->
+                    <DataGridTextColumn Header="Manufacturer" Width="*" MinWidth="125" Binding="{Binding Manufacturer}" />
+                    <DataGridTextColumn Header="Name" Width="1.6*" MinWidth="150" Binding="{Binding Name}" />
                     <DataGridTemplateColumn Header="Format" Width="96" SortMemberPath="Format">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
@@ -40,8 +41,8 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="Modes" Width="100" Binding="{Binding ModesText}" />
-                    <DataGridTextColumn Header="Revision" Width="*" Binding="{Binding Revision}" />
+                    <DataGridTextColumn Header="Modes" Width="118" Binding="{Binding ModesText}" />
+                    <DataGridTextColumn Header="Revision" Width="*" MinWidth="80" Binding="{Binding Revision}" />
                     <DataGridTextColumn Header="Size" Width="84" Binding="{Binding SizeText}" SortMemberPath="Size" />
                 </DataGrid.Columns>
             </DataGrid>
@@ -51,7 +52,7 @@
                 <TextBlock Text="Drop .gdtf, MA3 .xml or MA2 .pxml files here." Classes="sub" HorizontalAlignment="Center" />
             </StackPanel>
 
-            <Border Grid.Column="1" Classes="card" Width="320" Margin="12,0,0,0" IsVisible="{Binding Selected, Converter={x:Static v:Conv.NotNull}}">
+            <Border Grid.Column="1" Classes="card" Width="290" Margin="12,0,0,0" IsVisible="{Binding Selected, Converter={x:Static v:Conv.NotNull}}">
                 <Grid RowDefinitions="Auto,Auto,Auto,*">
                     <StackPanel Spacing="2">
                         <TextBlock Text="{Binding Selected.Manufacturer}" Classes="sub" />

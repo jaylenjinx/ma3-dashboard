@@ -15,6 +15,8 @@ public partial class MainWindow : Window, IDialogs
     public MainWindow()
     {
         InitializeComponent();
+        WindowChrome.FollowTheme(this);
+        WindowChrome.IntegrateTitleBar(this);
         AddHandler(DragDrop.DragOverEvent, (_, e) =>
             e.DragEffects = Vm?.CurrentPage is IDropTarget && e.DataTransfer.Contains(DataFormat.File) ? DragDropEffects.Copy : DragDropEffects.None);
         AddHandler(DragDrop.DropEvent, (_, e) =>
@@ -56,7 +58,9 @@ public partial class MainWindow : Window, IDialogs
         {
             Title = "MA3 Dashboard", SizeToContent = SizeToContent.WidthAndHeight, CanResize = false,
             WindowStartupLocation = WindowStartupLocation.CenterOwner, ShowInTaskbar = false, MinWidth = 380,
+            Background = this.FindResource("PaneBrush") as Avalonia.Media.IBrush,
         };
+        WindowChrome.FollowTheme(dialog);
         var ok = new Button { Content = action, Classes = { "accent" } };
         var cancel = new Button { Content = "Cancel", IsCancel = true };
         ok.Click += (_, _) => { result = true; dialog.Close(); };

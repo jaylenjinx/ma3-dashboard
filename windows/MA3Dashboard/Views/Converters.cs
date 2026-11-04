@@ -83,5 +83,9 @@ public static class Conv
     {
         "Installed" => Brushes.SeaGreen, "New" => new SolidColorBrush(Color.Parse("#E8A33D")), _ => Brushes.Gray,
     });
-    public static readonly IValueConverter Modes = new FuncValueConverter<List<FixtureMode>, string>(m => m == null ? "" : string.Join("\n", m.Select(x => $"{x.Name} · {x.Channels} ch")));
+    /// Page padding: less at the top when the drag strip above the page already gives the header room.
+    public static readonly IValueConverter PageMargin = new FuncValueConverter<bool, Avalonia.Thickness>(extended =>
+        extended ? new Avalonia.Thickness(24, 2, 24, 18) : new Avalonia.Thickness(24, 18, 24, 18));
+    public static readonly IValueConverter InstallLabel = new FuncValueConverter<bool, string>(installed => installed ? "Reinstall" : "Install");
+    public static readonly IValueConverter Modes =new FuncValueConverter<List<FixtureMode>, string>(m => m == null ? "" : string.Join("\n", m.Select(x => $"{x.Name} · {x.Channels} ch")));
 }

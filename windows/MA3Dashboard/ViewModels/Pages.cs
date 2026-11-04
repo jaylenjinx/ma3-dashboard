@@ -41,7 +41,7 @@ public partial class VersionViewModel : ObservableObject, IDropTarget
     partial void OnVersionChanged(MAVersion value)
     {
         foreach (var p in new[] { nameof(Title), nameof(Status), nameof(Builds), nameof(HasBuilds), nameof(HasManyBuilds), nameof(NewestBuild),
-                     nameof(CanLoad), nameof(LoadHint), nameof(IsRunning), nameof(BackupText), nameof(IsMa3) })
+                     nameof(CanLoad), nameof(LoadHint), nameof(IsRunning), nameof(BackupText), nameof(StatusLine), nameof(IsMa3) })
             OnPropertyChanged(p);
     }
 
@@ -55,6 +55,7 @@ public partial class VersionViewModel : ObservableObject, IDropTarget
     public string Status => Version.RunningBuild is { } b ? $"Running {b.Name} (pid {Version.Pid})"
         : Version.Builds.Count == 0 ? "Not installed on this computer" : "Not running";
     public string BackupText => Version.BackupCount == 0 ? "" : $"{Version.BackupCount} backup{(Version.BackupCount == 1 ? "" : "s")}";
+    public string StatusLine => BackupText == "" ? Status : $"{Status} · {BackupText}";
     public bool CanLoad => IsMa3 && Version.IsRunning && main.OscListening;
     public string LoadHint => !IsMa3 ? "" : !Version.IsRunning ? "Launch this version to load shows from here"
         : !main.OscListening ? "Turn on OSC input (port 8000) in onPC to load shows from here" : "";
@@ -64,7 +65,8 @@ public partial class VersionViewModel : ObservableObject, IDropTarget
     {
         build ??= NewestBuild;
         if (build == null) return;
-        if (main.Versions.Any(v => v.RunningBuild == build)) { main.Flash($"{build.Name} is already running"); return; }
+        // Covers the CleanStart twin too: both use this version's data folder, so only one can run.
+        if (Version.RunningBuild is { } running) { main.Flash($"{running.Name} is already running"); return; }
         var other = main.Versions.FirstOrDefault(v => v.IsRunning);
         main.Try(() => Scanner.Launch(build), $"Launching {build.Name}" + (other != null ? $" ({other.RunningBuild!.Name} is also running)" : ""));
         main.Refresh();
@@ -409,7 +411,10 @@ public partial class InstallViewModel : ObservableObject, IDropTarget
 
     public InstallViewModel(MainViewModel main) => this.main = main;
 
-    public string SearchText => $"Looking in {string.Join(" and ", InstallerScanner.SearchDirs)}";
+    // Short folder names in the subtitle (full paths wrapped onto three lines); the full paths are in the tooltip.
+    public string SearchText => "Looking in " + string.Join(" and ", InstallerScanner.SearchDirs.Select(d =>
+        string.Equals(d.TrimEnd('\\', '/'), Platform.DownloadsDir, StringComparison.OrdinalIgnoreCase) ? "Downloads" : Path.GetFileName(d.TrimEnd('\\', '/'))));
+    public string SearchPaths => string.Join(Environment.NewLine, InstallerScanner.SearchDirs);
     public string Hint => Platform.IsWindows
         ? "Download onPC from malighting.com (grandMA3 \"onPC Windows\" zip, or the grandMA2 onPC .exe). The installer asks for administrator access."
         : "Download the grandMA3 onPC macOS zip from malighting.com.";

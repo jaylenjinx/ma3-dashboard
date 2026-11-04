@@ -7,9 +7,9 @@
              x:DataType="vm:InstallViewModel">
     <Grid RowDefinitions="Auto,*">
         <Grid ColumnDefinitions="*,Auto">
-            <StackPanel Spacing="3">
+            <StackPanel Spacing="3" Margin="0,0,16,0">
                 <TextBlock Text="Install Versions" Classes="h1" />
-                <TextBlock Text="{Binding SearchText}" Classes="sub" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding SearchText}" Classes="sub" ToolTip.Tip="{Binding SearchPaths}" />
             </StackPanel>
             <Button Grid.Column="1" Classes="accent tool" Command="{Binding AddCommand}" VerticalAlignment="Center"
                     ToolTip.Tip="Copy installers into installation_packages so they show up here">
@@ -51,8 +51,9 @@
                                                 <mi:MaterialIcon Kind="FolderSearchOutline" /></Button>
                                             <Button Command="{Binding $parent[UserControl].DataContext.OpenInstallerCommand}" CommandParameter="{Binding}"
                                                     IsEnabled="{Binding IsIdle}" ToolTip.Tip="Open MA's installer to choose options yourself">Open Installer</Button>
-                                            <Button Classes="accent" Command="{Binding $parent[UserControl].DataContext.InstallCommand}" CommandParameter="{Binding}"
-                                                    IsEnabled="{Binding IsIdle}" Content="Install" />
+                                            <!-- Amber only for versions not installed yet; reinstalling stays a plain button. -->
+                                            <Button Classes.accent="{Binding !IsInstalled}" Command="{Binding $parent[UserControl].DataContext.InstallCommand}" CommandParameter="{Binding}"
+                                                    IsEnabled="{Binding IsIdle}" Content="{Binding IsInstalled, Converter={x:Static v:Conv.InstallLabel}}" />
                                         </StackPanel>
                                     </Grid>
                                 </Border>

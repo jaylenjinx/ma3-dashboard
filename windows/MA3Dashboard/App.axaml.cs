@@ -12,6 +12,7 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        AccessibleNames.Register();
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var vm = new MainViewModel();
