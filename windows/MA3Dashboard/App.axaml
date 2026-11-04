@@ -82,6 +82,12 @@
             <Setter Property="Padding" Value="14" />
         </Style>
 
+        <!-- Drawn title bar (Windows): the sidebar shows the icon and name itself, and Windows apps have no full-screen
+             caption button, so hide both parts of Avalonia's default decorations. -->
+        <Style Selector=":is(Control)#PART_TitleTextPanel > TextBlock, :is(Control)#PART_FullScreenButton">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+
         <!-- Sidebar: a soft amber tint for the current page instead of Fluent's solid accent fill. -->
         <Style Selector="ListBox.nav ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Transitions">

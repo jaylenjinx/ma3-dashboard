@@ -19,6 +19,17 @@ public static class WindowChrome
     const int UseImmersiveDarkMode = 20;          // Windows 10 20H1 and later, Windows 11
     const int UseImmersiveDarkModeBefore20H1 = 19; // Windows 10 1809 to 1909
 
+    /// Draws the app into the title bar area on Windows (sidebar to the top, Avalonia's own caption buttons), so there
+    /// is no separate system title bar. MainWindow.axaml marks the drag areas and sizes them from WindowDecorationMargin.
+    public const double TitleBarHeight = 40;
+
+    public static void IntegrateTitleBar(Window window)
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        window.ExtendClientAreaToDecorationsHint = true;
+        window.ExtendClientAreaTitleBarHeightHint = TitleBarHeight;
+    }
+
     public static void FollowTheme(Window window)
     {
         if (!OperatingSystem.IsWindows()) return;

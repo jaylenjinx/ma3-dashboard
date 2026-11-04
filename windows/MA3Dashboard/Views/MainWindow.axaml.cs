@@ -16,6 +16,7 @@ public partial class MainWindow : Window, IDialogs
     {
         InitializeComponent();
         WindowChrome.FollowTheme(this);
+        WindowChrome.IntegrateTitleBar(this);
         AddHandler(DragDrop.DragOverEvent, (_, e) =>
             e.DragEffects = Vm?.CurrentPage is IDropTarget && e.DataTransfer.Contains(DataFormat.File) ? DragDropEffects.Copy : DragDropEffects.None);
         AddHandler(DragDrop.DropEvent, (_, e) =>
