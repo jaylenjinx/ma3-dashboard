@@ -291,7 +291,7 @@ dialog button { background: rgba(255, 255, 255, .12); color: #fff; border: none;
       <div class="copy">
         <h2>Every version, one list</h2>
         <p>grandMA3 2.5 and later install as their own apps. 2.4 and earlier live as slots inside the grandMA3 launcher, which starts whichever slot was used last. The dashboard <strong>finds both kinds</strong> and launches the exact build you pick. It switches the launcher's slot for you when needed.</p>
-        <p>When two builds share a data folder (2.5.1.0 and 2.5.1.1, say), the Launch button starts the newest one and its menu lists the others. grandMA2 gets the same treatment, including its <strong>CleanStart</strong> build.</p>
+        <p>When two builds share a data folder (2.5.1.0 and 2.5.1.1, say), the Launch button starts the newest one and its menu lists the others. grandMA2 gets the same treatment, including its <strong>CleanStart</strong> build, whether it runs in <strong>CrossOver or a Parallels Desktop VM</strong>.</p>
         <p>With a show open and OSC input on port 8000, <strong>Load</strong> sends <code>LoadShow</code> to the running console. Switching shows doesn't mean leaving the dashboard.</p>
       </div>
       <button class="shot" type="button" data-full="images/install.jpg" aria-label="Enlarge: installed builds list">
@@ -411,7 +411,7 @@ docker compose up -d --build</code></pre>
           <tbody>
             <tr><td>grandMA3 data</td><td><code>~/MALightingTechnology/gma3_x.y.z</code></td><td><code>C:\ProgramData\MALightingTechnology\gma3_x.y.z</code> (changeable in settings)</td></tr>
             <tr><td>grandMA3 programs</td><td><code>/Applications/grandMA3 onPC *.app</code>, launcher slots</td><td><code>Program Files\MALightingTechnology\gma3_x.y.z</code>, Start Menu shortcuts</td></tr>
-            <tr><td>grandMA2</td><td>CrossOver bottles</td><td><code>Program Files\MA Lighting Technologies\grandma</code></td></tr>
+            <tr><td>grandMA2</td><td>CrossOver bottles, Parallels VMs</td><td><code>Program Files\MA Lighting Technologies\grandma</code></td></tr>
             <tr><td>Installers</td><td>Downloads, <code>installation_packages</code></td><td>Downloads, <code>installation_packages</code>, <code>gMA2onPC_v*.exe</code></td></tr>
           </tbody>
         </table>

@@ -82,7 +82,7 @@ struct SyncView: View {
             Section("What to sync") {
                 Toggle("grandMA3 showfiles (every version)", isOn: $store.syncSettings.ma3Shows)
                 Toggle("grandMA3 library: color themes, fixture types, datapools", isOn: $store.syncSettings.ma3Library)
-                Toggle("grandMA2 showfiles (CrossOver)", isOn: $store.syncSettings.ma2Shows)
+                Toggle("grandMA2 showfiles (CrossOver, Parallels)", isOn: $store.syncSettings.ma2Shows)
                 Picker("Sync automatically", selection: $store.syncSettings.autoSyncMinutes) {
                     Text("Off").tag(0)
                     Text("Every 5 minutes").tag(5)

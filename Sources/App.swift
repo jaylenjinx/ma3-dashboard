@@ -66,10 +66,12 @@ struct ContentView: View {
                         VersionRow(v: v).tag(SidebarItem.version(v.id))
                     }
                 }
-                let ma2 = store.versions.filter { $0.product == .ma2 }
-                if !ma2.isEmpty {
-                    Section("grandMA2 onPC · CrossOver") {
-                        ForEach(ma2) { v in VersionRow(v: v).tag(SidebarItem.version(v.id)) }
+                ForEach(WinHost.allCases, id: \.self) { host in
+                    let ma2 = store.versions.filter { $0.product == .ma2 && $0.host == host }
+                    if !ma2.isEmpty {
+                        Section("grandMA2 onPC · \(host.title)") {
+                            ForEach(ma2) { v in VersionRow(v: v).tag(SidebarItem.version(v.id)) }
+                        }
                     }
                 }
                 Section("Library") {
@@ -215,19 +217,19 @@ struct ShowsView: View {
                 if v.product == .ma3 { Button("Load in \(v.version)") { confirmLoad(s) }.disabled(!canLoad) }
                 Button("Duplicate") { store.duplicate(s) }
             }
-            Button("Show in Finder") { store.reveal(shows.map(\.url)) }
+            Button(v.winDir != nil ? "Show in Explorer" : "Show in Finder") { store.revealShows(shows) }
         } primaryAction: { ids in
             guard let s = v.shows.first(where: { ids.contains($0.id) }) else { return }
-            if canLoad { confirmLoad(s) } else { store.reveal([s.url]) }
+            if canLoad { confirmLoad(s) } else { store.revealShows([s]) }
         }
         .overlay {
             if rows.isEmpty {
                 ContentUnavailableView(v.shows.isEmpty ? "No showfiles" : "No matches",
-                                       systemImage: "doc", description: Text(v.shows.isEmpty ? v.showsDir.path : ""))
+                                       systemImage: "doc", description: Text(v.shows.isEmpty ? (v.unavailableNote ?? v.winDir.map { $0.path + "\\shows" } ?? v.showsDir.path) : ""))
             }
         }
         .searchable(text: $query, prompt: "Filter showfiles")
-        .navigationTitle("\(v.product.title) \(v.version)")
+        .navigationTitle("\(v.product.title) \(v.version)" + (v.host == .parallels ? " · Parallels" : ""))
         .navigationSubtitle(v.running.map { "Running \($0.build.fullVersion) · PID \($0.pid)" }
                             ?? (v.builds.isEmpty ? "No build installed" : v.builds.map(\.fullVersion).joined(separator: ", ")))
         .toolbar {
@@ -834,10 +836,7 @@ struct InstallView: View {
                         }
                         Button("Launch") { store.launch(b) }
                         Button {
-                            switch b.kind {
-                            case .app(let u), .crossover(let u): store.reveal([u])
-                            case .launcherSlot(let l, _): store.reveal([l])
-                            }
+                            store.reveal([b.url])
                         } label: { Image(systemName: "magnifyingglass") }
                         .help("Show in Finder")
                     }

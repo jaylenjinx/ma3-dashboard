@@ -97,7 +97,9 @@ struct SyncRoot: Codable, Hashable {
                                   recursive: true, exclude: [#"\.bak(-|$)"#, #"(^|/)libcache\.dat$"#]))
         }
         if s.ma2Shows {
-            for (v, dir) in Scanner.ma2DataDirs() {
+            // One local folder per remote path: if a version is in both CrossOver and Parallels, CrossOver's is used.
+            var seen = Set<String>()
+            for (v, dir, _) in Scanner.ma2DataDirs() where seen.insert(v).inserted {
                 roots.append(SyncRoot(prefix: "ma2/\(v)/shows", dir: dir.appendingPathComponent("shows").path,
                                       suffixes: [".show.gz", ".show"]))
             }
